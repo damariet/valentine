@@ -129,26 +129,28 @@
     <button id="noBtn">NO</button>
 </div>
 
-<!-- Invisible touch zones -->
+<!-- Touch split‑screen zones -->
 <div id="leftZone" class="controlZone"></div>
 <div id="rightZone" class="controlZone"></div>
 
 <script>
-let score = 0, level = 1;
+let score=0, level=1;
 const basket = document.getElementById("basket");
 const scoreDisplay = document.getElementById("score");
 const musicPlayer = document.getElementById("musicPlayer");
 const catchSound = document.getElementById("catchSound");
-let basketX = window.innerWidth/2;
-let gameLoop, moveDirection = 0, isPaused = false;
+let basketX=window.innerWidth/2, gameLoop, moveDirection=0, isPaused=false;
 
-// Move the basket
-basket.style.left = basketX + "px";
+// hide basket until start
+basket.style.left = basketX+"px";
+basket.style.display = "none";
+
+// continuous movement loop
 function moveBasket() {
-    if (moveDirection !== 0) {
+    if (moveDirection!==0) {
         basketX += moveDirection * 10;
         basketX = Math.max(0, Math.min(window.innerWidth - basket.offsetWidth, basketX));
-        basket.style.left = basketX + "px";
+        basket.style.left = basketX+"px";
     }
     requestAnimationFrame(moveBasket);
 }
@@ -156,22 +158,22 @@ moveBasket();
 
 // Start game
 function startGame() {
-    document.getElementById("startScreen").style.display = "none";
-    scoreDisplay.style.display = "block";
-    document.getElementById("controls").style.display = "block";
-    basket.style.display = "block"; // show basket
+    document.getElementById("startScreen").style.display="none";
+    scoreDisplay.style.display="block";
+    document.getElementById("controls").style.display="block";
+    basket.style.display="block";
     smoothFadeInMusic(10);
     updateScore();
     gameLoop = setInterval(createHeart, 600 - level*100);
 }
 
-// Touch control zones
-document.getElementById("leftZone").addEventListener("touchstart", ()=> moveDirection = -1);
-document.getElementById("leftZone").addEventListener("touchend", ()=> moveDirection = 0);
-document.getElementById("rightZone").addEventListener("touchstart", ()=> moveDirection = 1);
-document.getElementById("rightZone").addEventListener("touchend", ()=> moveDirection = 0);
+// touch zones
+document.getElementById("leftZone").addEventListener("touchstart", ()=> moveDirection=-1);
+document.getElementById("leftZone").addEventListener("touchend", ()=> moveDirection=0);
+document.getElementById("rightZone").addEventListener("touchstart", ()=> moveDirection=1);
+document.getElementById("rightZone").addEventListener("touchend", ()=> moveDirection=0);
 
-// Pause & Resume
+// Pause/Resume
 const pauseBtn = document.getElementById("pauseBtn");
 const resumeBtn = document.getElementById("resumeBtn");
 
@@ -179,33 +181,40 @@ pauseBtn.addEventListener("click", () => {
     if (!isPaused) {
         togglePause();
         musicPlayer.pause();
-        pauseBtn.style.display = "none";
-        resumeBtn.style.display = "inline-block";
+        pauseBtn.style.display="none";
+        resumeBtn.style.display="inline-block";
     }
 });
 resumeBtn.addEventListener("click", () => {
     if (isPaused) {
         togglePause();
         musicPlayer.play();
-        resumeBtn.style.display = "none";
-        pauseBtn.style.display = "inline-block";
+        resumeBtn.style.display="none";
+        pauseBtn.style.display="inline-block";
     }
 });
-
 function togglePause() {
     isPaused = !isPaused;
     if (isPaused) clearInterval(gameLoop);
     else gameLoop = setInterval(createHeart, 600 - level*100);
 }
 
-function updateScore() {
+// auto‑pause on tab hide
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+        if (!musicPlayer.paused) musicPlayer.pause();
+    }
+});
+
+// scoring
+function updateScore(){
     const targets=[5,10,15];
     scoreDisplay.innerText = `LEVEL ${level} — LOVE: ${score} / ${targets[level-1]}`;
 }
 
-function nextLevel() {
-    level++; score = 0;
-    if (level > 3) {
+function nextLevel(){
+    level++; score=0;
+    if(level>3){
         clearInterval(gameLoop);
         showValentine();
         return;
@@ -213,91 +222,89 @@ function nextLevel() {
     updateScore();
 }
 
-function createHeart() {
-    if (isPaused) return;
-    let heart = document.createElement("div");
-    let isBroken = Math.random() < (0.2 + level*0.15);
-    heart.innerHTML = isBroken?"💔":"♥";
-    heart.className = isBroken?"broken":"heart";
-    heart.style.left = Math.random()*(window.innerWidth - 40) + "px";
-    heart.style.top = "-30px";
+function createHeart(){
+    if(isPaused) return;
+    let heart=document.createElement("div");
+    let isBroken=Math.random()<(0.2+level*0.15);
+    heart.innerHTML=isBroken?"💔":"♥";
+    heart.className=isBroken?"broken":"heart";
+    heart.style.left=Math.random()*(window.innerWidth-40)+"px";
+    heart.style.top="-30px";
     document.getElementById("gameArea").appendChild(heart);
 
-    let speed = 3 + level*2;
-    let fall = setInterval(() => {
-        if (isPaused) return;
-        heart.style.top = heart.offsetTop + speed + "px";
-        if (heart.offsetTop > window.innerHeight - 100 &&
-            Math.abs(heart.offsetLeft - basketX) < 50) {
-            score += isBroken ? -1 : 1;
-            score = Math.max(0, score);
-            catchSound.currentTime = 0;
+    let speed=3+level*2;
+    let fall=setInterval(()=>{
+        if(isPaused) return;
+        heart.style.top=heart.offsetTop+speed+"px";
+        if(heart.offsetTop>window.innerHeight-100 &&
+            Math.abs(heart.offsetLeft-basketX)<50){
+            score+=isBroken?-1:1;
+            score=Math.max(0,score);
+            catchSound.currentTime=0;
             catchSound.play();
             heart.remove();
             clearInterval(fall);
             updateScore();
-            if ((level===1 && score>=5) ||
-                (level===2 && score>=10) ||
-                (level===3 && score>=15)) nextLevel();
+            if((level===1&&score>=5)||(level===2&&score>=10)||(level===3&&score>=15)) nextLevel();
         }
-        if (heart.offsetTop > window.innerHeight) {
+        if(heart.offsetTop>window.innerHeight){
             heart.remove();
             clearInterval(fall);
         }
     },30);
 }
 
-function smoothFadeInMusic(duration) {
+// music fade‑in
+function smoothFadeInMusic(duration){
     musicPlayer.volume = 0;
     musicPlayer.play().catch(()=>{});
     let step=1/(duration*20);
-    let fadeInterval=setInterval(()=>{
-        if (musicPlayer.volume<1) musicPlayer.volume=Math.min(musicPlayer.volume+step,1);
-        else clearInterval(fadeInterval);
+    let fadeInt=setInterval(()=>{
+        if(musicPlayer.volume<1) musicPlayer.volume=Math.min(musicPlayer.volume+step,1);
+        else clearInterval(fadeInt);
     },50);
 }
 
-function showValentine() {
+function showValentine(){
     document.getElementById("valentineScreen").style.display="flex";
 }
 
-document.getElementById("yesBtn").onclick = () => {
-    document.getElementById("valentineScreen").innerHTML = `
+document.getElementById("yesBtn").onclick=()=>{
+    document.getElementById("valentineScreen").innerHTML=`
       <h1>YOU WON MY HEART 💘</h1>
       <h2>Happy Valentine’s Day! 💘</h2>
       <button onclick="resetGame()">RESTART</button>`;
 };
 
-let noBtnMoves = 0;
-const noBtn = document.getElementById("noBtn");
-noBtn.onmouseover = () => {
-    if (noBtnMoves>=3) return;
+let noBtnMoves=0;
+const noBtn=document.getElementById("noBtn");
+noBtn.onmouseover=()=>{
+    if(noBtnMoves>=3)return;
     noBtn.style.position="absolute";
-    const maxX = valentineScreen.offsetWidth - noBtn.offsetWidth;
-    const maxY = valentineScreen.offsetHeight - noBtn.offsetHeight;
-    noBtn.style.left = Math.random()*maxX + "px";
-    noBtn.style.top = Math.random()*maxY + "px";
+    const maxX=valentineScreen.offsetWidth-noBtn.offsetWidth;
+    const maxY=valentineScreen.offsetHeight-noBtn.offsetHeight;
+    noBtn.style.left=Math.random()*maxX+"px";
+    noBtn.style.top=Math.random()*maxY+"px";
     noBtnMoves++;
-    if (noBtnMoves>=3) noBtn.onclick=showFinalNoMessage;
+    if(noBtnMoves>=3) noBtn.onclick=showFinalNoMessage;
 };
-
-function showFinalNoMessage() {
-    document.getElementById("valentineScreen").innerHTML = `
+function showFinalNoMessage(){
+    document.getElementById("valentineScreen").innerHTML=`
       <h1>Oh you thought you could say NO? 😏</h1>
       <h2>Happy Valentine’s Day! 💘</h2>
       <button onclick="resetGame()">RESTART</button>`;
 }
-
-function resetGame() {
+function resetGame(){
     musicPlayer.pause();
-    musicPlayer.currentTime = 0;
+    musicPlayer.currentTime=0;
     level=1; score=0; noBtnMoves=0;
     document.getElementById("controls").style.display="none";
     document.getElementById("valentineScreen").style.display="none";
-    basket.style.display="none"; // hide basket again
+    basket.style.display="none";
     document.getElementById("startScreen").style.display="flex";
 }
 </script>
 
 </body>
 </html>
+
