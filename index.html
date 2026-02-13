@@ -57,11 +57,14 @@ button {
   position:absolute; top:14px; width:100%;
   color:cyan; font-size:4.5vw; z-index:5; display:none;
 }
-.heart, .broken { position:absolute; font-size:7.5vw; }
+.heart, .broken {
+  position:absolute;
+  font-size:7vw; /* make both heart types exactly the same size */
+}
 .heart { color:#ff00ff; }
 .broken { color:cyan; }
 #basket {
-  position:absolute; bottom:15px; font-size:7.5vw;
+  position:absolute; bottom:15px; font-size:7vw;
   color:cyan; display:none;
 }
 #valentineScreen {
@@ -112,12 +115,12 @@ button {
 </div>
 
 <script>
-// viewport fix
+// dynamic viewport
 function setDvh(){document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);}
 window.addEventListener('resize', setDvh);
 setDvh();
 
-// Game variables
+// GAME VARS
 let score=0, level=1;
 const basket=document.getElementById("basket");
 const scoreDisplay=document.getElementById("score");
@@ -127,11 +130,11 @@ const catchSound=document.getElementById("catchSound");
 let basketX=window.innerWidth/2, targetX=basketX;
 let moveStartX=null, touchActive=false, gameLoop, inactivityTimer, isPaused=false;
 
-// hide basket
+// Hide until start
 basket.style.left=basketX+"px";
 basket.style.display="none";
 
-// smooth basket follow
+// Smooth follow
 function smoothFollow(){
   basketX += (targetX - basketX)*0.25;
   basket.style.left=basketX+"px";
@@ -139,7 +142,7 @@ function smoothFollow(){
 }
 smoothFollow();
 
-// input handling
+// Input handling
 function handleDrag(x){
   if(!touchActive) return;
   let delta = x - moveStartX;
@@ -156,12 +159,12 @@ document.addEventListener("mousedown", e=>{touchActive=true; moveStartX=e.client
 document.addEventListener("mousemove", e=>{handleDrag(e.clientX);});
 document.addEventListener("mouseup", ()=>touchActive=false);
 
-// auto pause music
+// Auto pause music
 document.addEventListener("visibilitychange", ()=>{
   if(document.hidden && !musicPlayer.paused) musicPlayer.pause();
 });
 
-// pause/resume
+// Pause/Resume
 const pauseBtn=document.getElementById("pauseBtn");
 const resumeBtn=document.getElementById("resumeBtn");
 pauseBtn.addEventListener("click", ()=>{
@@ -190,20 +193,19 @@ function showTutorial(){
   document.getElementById("tutorialOverlay").style.display="flex";
 }
 
-// Run demo then start
+// Demo and game start
 function runDemo(){
   document.getElementById("tutorialOverlay").style.display="none";
   let count=0;
-  const dI=setInterval(()=>{
+  let demoInt=setInterval(()=>{
     dropDemoHeart();
     count++;
     if(count>=2){
-      clearInterval(dI);
+      clearInterval(demoInt);
       setTimeout(startGame, 500);
     }
   }, 1000);
 }
-
 function dropDemoHeart(){
   let heart=document.createElement("div");
   heart.innerHTML="♥"; heart.className="heart";
@@ -219,7 +221,7 @@ function dropDemoHeart(){
   },30);
 }
 
-// Start game logic
+// Start game
 function startGame(){
   musicPlayer.volume=0;
   musicPlayer.play().catch(()=>{});
@@ -236,23 +238,21 @@ function startGame(){
 function resetInactivity(){
   clearTimeout(inactivityTimer);
   inactivityTimer=setTimeout(()=>{
-    alert("No movement for 20s — restarting!");
+    alert("No movement for 20 seconds — restarting!");
     resetGame();
   }, 20000);
 }
 
-// Hearts & collision
+// Hearts & collisions
 function updateScore(){
   const targets=[5,10,15];
   scoreDisplay.innerText=`LEVEL ${level} — LOVE: ${score} / ${targets[level-1]}`;
 }
-
 function nextLevel(){
   level++; score=0;
   if(level>3){ clearInterval(gameLoop); showValentine(); return; }
   updateScore(); resetInactivity();
 }
-
 function createHeart(){
   if(isPaused) return;
   let heart=document.createElement("div");
@@ -270,13 +270,13 @@ function createHeart(){
 
     let hr=heart.getBoundingClientRect();
     let br=basket.getBoundingClientRect();
-    let basketHitWidth=br.width*0.6;
-    let basketHitX=br.left+(br.width-basketHitWidth)/2;
+    let basketHitWidth = br.width * 0.6;
+    let basketHitX = br.left + (br.width - basketHitWidth)/2;
 
-    if(hr.left<basketHitX+basketHitWidth &&
-       hr.left+hr.width>basketHitX &&
-       hr.top<br.top+br.height &&
-       hr.top+hr.height>br.top){
+    if(hr.left < basketHitX+basketHitWidth &&
+       hr.left+hr.width > basketHitX &&
+       hr.top < br.top+br.height &&
+       hr.top+hr.height > br.top){
 
       if(!isBroken){
         catchSound.currentTime=0; catchSound.play(); score++;
@@ -296,7 +296,7 @@ function smoothFadeInMusic(d){ let step=1/(d*20); let fade=setInterval(()=>{
   },50);
 }
 
-// Valentine
+// Valentine page behavior
 function showValentine(){document.getElementById("valentineScreen").style.display="flex";}
 document.getElementById("yesBtn").onclick=()=>{
   document.getElementById("valentineScreen").innerHTML=`
@@ -307,6 +307,8 @@ document.getElementById("yesBtn").onclick=()=>{
 
 let noBtnMoves=0;
 const noBtn=document.getElementById("noBtn");
+let noTimeout=null;
+
 noBtn.onmouseover=()=>{
   if(noBtnMoves>=3) return;
   noBtn.style.position="absolute";
@@ -315,13 +317,26 @@ noBtn.onmouseover=()=>{
   noBtn.style.left=Math.random()*mx+"px";
   noBtn.style.top=Math.random()*my+"px";
   noBtnMoves++;
-  if(noBtnMoves>=3) noBtn.onclick=()=>{
-    document.getElementById("valentineScreen").innerHTML=`
-      <h1>Oh you thought you could say NO? 😏</h1>
-      <h2>Happy Valentine’s Day! 💘</h2>
-      <button onclick="resetGame()">RESTART</button>`;
+  if(noBtnMoves>=3){
+    noBtn.onclick=showFinalNoMessage;
   }
 };
+
+// after 15s on final no page, return to yes/no
+function showFinalNoMessage(){
+  document.getElementById("valentineScreen").innerHTML=`
+    <h1>Oh you thought you could say NO? 😏</h1>
+    <h2>Happy Valentine’s Day! 💘</h2>
+    <button onclick="resetGame()">RESTART</button>`;
+  if(noTimeout) clearTimeout(noTimeout);
+  noTimeout = setTimeout(() => {
+    document.getElementById("valentineScreen").innerHTML = `
+      <h1>Autumn… 💘</h1>
+      <h2>Will you be my Valentine?</h2>
+      <button id="yesBtn">YES</button>
+      <button id="noBtn">NO</button>`;
+  }, 15000);
+}
 
 function resetGame(){
   musicPlayer.pause(); musicPlayer.currentTime=0;
@@ -331,10 +346,12 @@ function resetGame(){
   basket.style.display="none";
   document.getElementById("startScreen").style.display="flex";
   clearInterval(gameLoop); clearTimeout(inactivityTimer);
+  if(noTimeout) { clearTimeout(noTimeout); noTimeout=null; }
 }
 </script>
 
 </body>
 </html>
+
 
 
