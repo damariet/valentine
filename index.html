@@ -12,9 +12,9 @@ html, body {
   overflow:hidden; touch-action:none;
   background:black;
 }
-body { height: calc(var(--vh,1vh)*100); }
+body { height:calc(var(--vh,1vh)*100); }
 
-/* Start & Tutorial */
+/* START & TUTORIAL */
 #startScreen, #tutorialOverlay {
   position:absolute; width:100%; height:calc(var(--vh,1vh)*100);
   display:flex; justify-content:center; align-items:center; flex-direction:column;
@@ -78,20 +78,19 @@ button {
 <audio id="musicPlayer" loop>
   <source src="https://raw.githubusercontent.com/damariet/valentine/main/Chris_Brown_-_New_Flame_Feat._Usher_And_Rick_Ross_(mp3.pm).mp3" type="audio/mpeg">
 </audio>
-<audio id="catchSound"><source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_6e6f8e3d44.mp3"></audio>
-<audio id="buzzerSound">
-  <source src="path/to/fail-buzzer-sound-effect.mp3" type="audio/mpeg">
+<audio id="catchSound">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_6e6f8e3d44.mp3">
 </audio>
 
 <!-- Screens -->
 <div id="startScreen">
   <h1>💘 Winning Autumn's Heart 💘</h1>
-  <button onclick="startTutorial()">PRESS START</button>
+  <button onclick="showTutorial()">PRESS START</button>
 </div>
 
 <div id="tutorialOverlay">
-  <div>Drag your finger left or right anywhere on the screen to move the basket.</div>
-  <button onclick="beginDemo()">Got it!</button>
+  <div>Drag left or right anywhere to move the basket.</div>
+  <button onclick="runDemo()">Got it!</button>
 </div>
 
 <div id="score">LEVEL 1 — LOVE: 0 / 5</div>
@@ -113,27 +112,26 @@ button {
 </div>
 
 <script>
-// viewport height fix
+// viewport fix
 function setDvh(){document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);}
 window.addEventListener('resize', setDvh);
 setDvh();
 
-// Variables
+// Game variables
 let score=0, level=1;
 const basket=document.getElementById("basket");
 const scoreDisplay=document.getElementById("score");
 const musicPlayer=document.getElementById("musicPlayer");
 const catchSound=document.getElementById("catchSound");
-const buzzerSound=document.getElementById("buzzerSound");
 
 let basketX=window.innerWidth/2, targetX=basketX;
 let moveStartX=null, touchActive=false, gameLoop, inactivityTimer, isPaused=false;
 
-// Hide until start
+// hide basket
 basket.style.left=basketX+"px";
 basket.style.display="none";
 
-// Smooth follow
+// smooth basket follow
 function smoothFollow(){
   basketX += (targetX - basketX)*0.25;
   basket.style.left=basketX+"px";
@@ -141,30 +139,29 @@ function smoothFollow(){
 }
 smoothFollow();
 
-// Input handling
+// input handling
 function handleDrag(x){
   if(!touchActive) return;
-  const delta = x - moveStartX;
+  let delta = x - moveStartX;
   targetX += delta * 0.7;
   moveStartX = x;
   resetInactivity();
 }
 
-// Touch & Mouse Controls
-document.addEventListener("touchstart", e=>{ touchActive=true; moveStartX=e.touches[0].clientX; });
-document.addEventListener("touchmove", e=>{ handleDrag(e.touches[0].clientX); }, {passive:false});
+document.addEventListener("touchstart", e=>{touchActive=true; moveStartX=e.touches[0].clientX;});
+document.addEventListener("touchmove", e=>{handleDrag(e.touches[0].clientX);}, {passive:false});
 document.addEventListener("touchend", ()=>touchActive=false);
 
-document.addEventListener("mousedown", e=>{ touchActive=true; moveStartX=e.clientX; });
-document.addEventListener("mousemove", e=>{ handleDrag(e.clientX); });
+document.addEventListener("mousedown", e=>{touchActive=true; moveStartX=e.clientX;});
+document.addEventListener("mousemove", e=>{handleDrag(e.clientX);});
 document.addEventListener("mouseup", ()=>touchActive=false);
 
-// Auto pause music
+// auto pause music
 document.addEventListener("visibilitychange", ()=>{
   if(document.hidden && !musicPlayer.paused) musicPlayer.pause();
 });
 
-// PAUSE/RESUME
+// pause/resume
 const pauseBtn=document.getElementById("pauseBtn");
 const resumeBtn=document.getElementById("resumeBtn");
 pauseBtn.addEventListener("click", ()=>{
@@ -187,20 +184,26 @@ function togglePause(){
   else gameLoop=setInterval(createHeart, 600-level*100);
 }
 
-// TUTORIAL
-function startTutorial(){
+// Show tutorial
+function showTutorial(){
   document.getElementById("startScreen").style.display="none";
   document.getElementById("tutorialOverlay").style.display="flex";
 }
-function beginDemo(){
+
+// Run demo then start
+function runDemo(){
   document.getElementById("tutorialOverlay").style.display="none";
   let count=0;
-  let demoInt=setInterval(()=>{
+  const dI=setInterval(()=>{
     dropDemoHeart();
     count++;
-    if(count>=2){ clearInterval(demoInt); setTimeout(startGame,500); }
-  },1000);
+    if(count>=2){
+      clearInterval(dI);
+      setTimeout(startGame, 500);
+    }
+  }, 1000);
 }
+
 function dropDemoHeart(){
   let heart=document.createElement("div");
   heart.innerHTML="♥"; heart.className="heart";
@@ -210,11 +213,13 @@ function dropDemoHeart(){
   let speed=4;
   let fall=setInterval(()=>{
     heart.style.top=heart.offsetTop+speed+"px";
-    if(heart.offsetTop>window.innerHeight){ heart.remove(); clearInterval(fall); }
+    if(heart.offsetTop>window.innerHeight){
+      heart.remove(); clearInterval(fall);
+    }
   },30);
 }
 
-// START GAME
+// Start game logic
 function startGame(){
   musicPlayer.volume=0;
   musicPlayer.play().catch(()=>{});
@@ -227,23 +232,24 @@ function startGame(){
   resetInactivity();
 }
 
-// Inactivity
+// Inactivity reset
 function resetInactivity(){
   clearTimeout(inactivityTimer);
   inactivityTimer=setTimeout(()=>{
     alert("No movement for 20s — restarting!");
     resetGame();
-  },20000);
+  }, 20000);
 }
 
-// HEARTS & COLLISIONS
+// Hearts & collision
 function updateScore(){
   const targets=[5,10,15];
   scoreDisplay.innerText=`LEVEL ${level} — LOVE: ${score} / ${targets[level-1]}`;
 }
+
 function nextLevel(){
   level++; score=0;
-  if(level>3){ clearInterval(gameLoop); showValentine(); return;}
+  if(level>3){ clearInterval(gameLoop); showValentine(); return; }
   updateScore(); resetInactivity();
 }
 
@@ -262,21 +268,17 @@ function createHeart(){
     if(isPaused) return;
     heart.style.top=heart.offsetTop+speed+"px";
 
-    // Reduced hitbox for basket (smaller than full sprite)
     let hr=heart.getBoundingClientRect();
     let br=basket.getBoundingClientRect();
-    let basketHitWidth = br.width * 0.6; // smaller hitbox width
-    let basketHitX = br.left + (br.width - basketHitWidth)/2;
+    let basketHitWidth=br.width*0.6;
+    let basketHitX=br.left+(br.width-basketHitWidth)/2;
 
-    if(hr.left < basketHitX+basketHitWidth &&
-       hr.left+hr.width > basketHitX &&
-       hr.top < br.top+br.height &&
-       hr.top+hr.height > br.top){
+    if(hr.left<basketHitX+basketHitWidth &&
+       hr.left+hr.width>basketHitX &&
+       hr.top<br.top+br.height &&
+       hr.top+hr.height>br.top){
 
-      if(isBroken){
-        buzzerSound.currentTime=0; buzzerSound.play();
-        score=Math.max(0, score-1);
-      } else {
+      if(!isBroken){
         catchSound.currentTime=0; catchSound.play(); score++;
       }
       heart.remove(); clearInterval(fall);
@@ -290,13 +292,12 @@ function createHeart(){
 // Music fade
 function smoothFadeInMusic(d){ let step=1/(d*20); let fade=setInterval(()=>{
     if(musicPlayer.volume<1) musicPlayer.volume=Math.min(musicPlayer.volume+step,1);
-    else clearInterval(fade); },50);
+    else clearInterval(fade);
+  },50);
 }
 
-// Valentine screen fix
-function showValentine(){
-  document.getElementById("valentineScreen").style.display="flex";
-}
+// Valentine
+function showValentine(){document.getElementById("valentineScreen").style.display="flex";}
 document.getElementById("yesBtn").onclick=()=>{
   document.getElementById("valentineScreen").innerHTML=`
     <h1>YOU WON MY HEART 💘</h1>
@@ -321,6 +322,7 @@ noBtn.onmouseover=()=>{
       <button onclick="resetGame()">RESTART</button>`;
   }
 };
+
 function resetGame(){
   musicPlayer.pause(); musicPlayer.currentTime=0;
   level=1; score=0; noBtnMoves=0;
