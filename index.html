@@ -5,25 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Winning Autumn's Heart 💖</title>
 <style>
-:root { --vh: 1vh; }
 html, body {
   margin: 0; padding: 0;
   width: 100%; height: 100%;
   background: black; overflow: hidden; touch-action: none;
+  font-family: Arial, sans-serif;
 }
-body { height: calc(var(--vh,1vh)*100); font-family: Arial, sans-serif; }
 
 /* START & TUTORIAL */
-#startScreen, #tutorialOverlay {
-  position:absolute; width:100%; height:calc(var(--vh,1vh)*100);
-  display:flex; justify-content:center; align-items:center; flex-direction:column;
+#startScreen, #tutorialOverlay, #gameArea {
+  position: absolute;
+  width: 100%;
+  height: 100vh; /* fixed to avoid blue screen issue */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
+
 #startScreen {
   background: linear-gradient(45deg,#ffccff,#ccffff,#ffffcc,#ffccff);
   background-size:400% 400%; animation:rainbowShift 8s ease infinite;
 }
 @keyframes rainbowShift { 0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%} }
 #startScreen h1 { font-size:5.5vw; text-align:center; color:hotpink; margin:0 10px; }
+
 #tutorialOverlay { background:rgba(0,0,0,0.75); color:cyan; font-size:4.5vw; text-align:center; padding:15px; display:none; }
 
 /* UI */
@@ -38,7 +44,6 @@ button {
 
 /* GAME AREA */
 #gameArea {
-  width:100vw; height:calc(var(--vh,1vh)*100);
   background:linear-gradient(to top,#120458,#000);
   position:relative; overflow:hidden;
 }
@@ -75,7 +80,6 @@ button {
 }
 </style>
 </head>
-
 <body>
 
 <!-- AUDIO -->
@@ -107,10 +111,6 @@ button {
 <div id="valentineScreen"></div>
 
 <script>
-// SETUP
-function setVh(){document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);}
-window.addEventListener('resize', setVh); setVh();
-
 // GAME STATE
 let score=0, level=1, isPaused=false;
 let gameLoop, inactivityTimer, noReturnTimer;
@@ -143,7 +143,6 @@ function runDemo(){
 // START GAME
 function startGame(){
   scoreDisplay.style.display="block";
-  document.getElementById("controls").style.display="block";
   basket.style.display="block";
   musicPlayer.play().catch(()=>{});
   updateScore();
@@ -242,15 +241,6 @@ function createHeart(){
   },30);
 }
 
-// PAUSE/RESUME
-document.getElementById("pauseBtn").onclick=()=>{
-  isPaused=true; clearInterval(gameLoop); musicPlayer.pause();
-};
-document.getElementById("resumeBtn").onclick=()=>{
-  isPaused=false; musicPlayer.play();
-  gameLoop=setInterval(createHeart,600-level*100);
-};
-
 // VALENTINE SCREENS
 function showValentine(){
   clearInterval(gameLoop);
@@ -299,7 +289,6 @@ function startNoCountdown(){
 function resetAll(){
   musicPlayer.pause(); musicPlayer.currentTime=0;
   level=1; score=0;
-  document.getElementById("controls").style.display="none";
   document.getElementById("valentineScreen").style.display="none";
   basket.style.display="none";
   document.getElementById("startScreen").style.display="flex";  
@@ -310,9 +299,6 @@ function resetAll(){
 
 </body>
 </html>
-
-
-
 
 
 
