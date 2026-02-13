@@ -39,10 +39,14 @@
         cursor: pointer;
         margin: 10px;
     }
-    button:hover {
-        background: hotpink;
-        color: black;
+    .controlZone {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 50%;
     }
+    #leftZone { left: 0; }
+    #rightZone { right: 0; }
     #controls {
         position: fixed;
         top: 10px;
@@ -93,7 +97,6 @@
 </head>
 <body>
 
-<!-- Music -->
 <audio id="musicPlayer" loop>
     <source src="https://raw.githubusercontent.com/damariet/valentine/main/Chris_Brown_-_New_Flame_Feat._Usher_And_Rick_Ross_(mp3.pm).mp3" type="audio/mpeg">
 </audio>
@@ -101,7 +104,6 @@
     <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_6e6f8e3d44.mp3">
 </audio>
 
-<!-- Start Screen -->
 <div id="startScreen">
     <h1>💘 Winning Autumn's Heart 💘</h1>
     <p>Loading love.exe...</p>
@@ -126,35 +128,51 @@
     <button id="noBtn">NO</button>
 </div>
 
+<!-- Invisible split control zones -->
+<div id="leftZone" class="controlZone"></div>
+<div id="rightZone" class="controlZone"></div>
+
 <script>
 let score = 0, level = 1;
 const basket = document.getElementById("basket");
 const scoreDisplay = document.getElementById("score");
 const musicPlayer = document.getElementById("musicPlayer");
 const catchSound = document.getElementById("catchSound");
-let basketX = window.innerWidth / 2;
-let gameLoop;
-let isPaused = false;
+let basketX = window.innerWidth/2;
+let gameLoop, moveDirection = 0, isPaused = false;
 
-// Hide controls initially
-const controls = document.getElementById("controls");
+basket.style.left = basketX + "px";
+
+// Move basket each frame based on direction
+function moveBasket() {
+    if (moveDirection !== 0) {
+        basketX += moveDirection * 10;
+        basketX = Math.max(0, Math.min(window.innerWidth - basket.offsetWidth, basketX));
+        basket.style.left = basketX + "px";
+    }
+    requestAnimationFrame(moveBasket);
+}
+moveBasket(); // start continuous movement loop
+
+function startGame() {
+    document.getElementById("startScreen").style.display = "none";
+    scoreDisplay.style.display = "block";
+    document.getElementById("controls").style.display = "block";
+    smoothFadeInMusic(10);
+    updateScore();
+    gameLoop = setInterval(createHeart, 600 - level*100);
+}
+
+// Split screen control behavior
+document.getElementById("leftZone").addEventListener("touchstart", ()=> moveDirection = -1);
+document.getElementById("leftZone").addEventListener("touchend", ()=> moveDirection = 0);
+document.getElementById("rightZone").addEventListener("touchstart", ()=> moveDirection = 1);
+document.getElementById("rightZone").addEventListener("touchend", ()=> moveDirection = 0);
+
+// Pause/Resume
 const pauseBtn = document.getElementById("pauseBtn");
 const resumeBtn = document.getElementById("resumeBtn");
 
-// Touch + Mouse support
-basket.style.left = basketX + "px";
-document.addEventListener("mousemove", e => {
-    basketX = e.clientX;
-    basket.style.left = (basketX - basket.offsetWidth/2) + "px";
-});
-document.addEventListener("touchmove", e => {
-    let touch = e.touches[0];
-    basketX = touch.clientX;
-    basket.style.left = (basketX - basket.offsetWidth/2) + "px";
-    e.preventDefault();
-}, { passive: false });
-
-// Pause and Resume
 pauseBtn.addEventListener("click", () => {
     if (!isPaused) {
         togglePause();
@@ -178,17 +196,8 @@ function togglePause() {
     else gameLoop = setInterval(createHeart, 600 - level*100);
 }
 
-function startGame() {
-    document.getElementById("startScreen").style.display = "none";
-    scoreDisplay.style.display = "block";
-    controls.style.display = "block"; // show pause controls
-    smoothFadeInMusic(10);
-    updateScore();
-    gameLoop = setInterval(createHeart, 600 - level*100);
-}
-
 function updateScore() {
-    const targets = [5,10,15];
+    const targets=[5,10,15];
     scoreDisplay.innerText = `LEVEL ${level} — LOVE: ${score} / ${targets[level-1]}`;
 }
 
@@ -206,9 +215,9 @@ function createHeart() {
     if (isPaused) return;
     let heart = document.createElement("div");
     let isBroken = Math.random() < (0.2 + level*0.15);
-    heart.innerHTML = isBroken? "💔":"♥";
-    heart.className = isBroken? "broken":"heart";
-    heart.style.left = Math.random()*(window.innerWidth-40)+"px";
+    heart.innerHTML = isBroken?"💔":"♥";
+    heart.className = isBroken?"broken":"heart";
+    heart.style.left = Math.random()*(window.innerWidth-40) + "px";
     heart.style.top = "-30px";
     document.getElementById("gameArea").appendChild(heart);
 
@@ -218,8 +227,8 @@ function createHeart() {
         heart.style.top = heart.offsetTop + speed + "px";
         if (heart.offsetTop > window.innerHeight-100 &&
             Math.abs(heart.offsetLeft - basketX) < 50) {
-            score += isBroken ? -1 : 1;
-            score = Math.max(0, score);
+            score += isBroken?-1:1;
+            score = Math.max(0,score);
             catchSound.currentTime = 0;
             catchSound.play();
             heart.remove();
@@ -233,15 +242,15 @@ function createHeart() {
             heart.remove();
             clearInterval(fall);
         }
-    },30);
+    }, 30);
 }
 
 function smoothFadeInMusic(duration) {
     musicPlayer.volume = 0;
-    musicPlayer.play().catch(() => {});
-    let step = 1/(duration*20);
-    let fadeInterval = setInterval(() => {
-        if (musicPlayer.volume < 1) musicPlayer.volume = Math.min(musicPlayer.volume+step,1);
+    musicPlayer.play().catch(()=>{});
+    let step=1/(duration*20);
+    let fadeInterval=setInterval(()=>{
+        if (musicPlayer.volume<1) musicPlayer.volume=Math.min(musicPlayer.volume+step,1);
         else clearInterval(fadeInterval);
     },50);
 }
@@ -250,24 +259,24 @@ function showValentine() {
     document.getElementById("valentineScreen").style.display="flex";
 }
 
-document.getElementById("yesBtn").onclick = () => {
+document.getElementById("yesBtn").onclick = ()=>{
     document.getElementById("valentineScreen").innerHTML = `
       <h1>YOU WON MY HEART 💘</h1>
       <h2>Happy Valentine’s Day! 💘</h2>
       <button onclick="resetGame()">RESTART</button>`;
 };
 
-let noBtnMoves = 0;
-const noBtn = document.getElementById("noBtn");
+let noBtnMoves=0;
+const noBtn=document.getElementById("noBtn");
 noBtn.onmouseover = () => {
-    if (noBtnMoves >= 3) return;
+    if (noBtnMoves>=3) return;
     noBtn.style.position="absolute";
     const maxX = valentineScreen.offsetWidth - noBtn.offsetWidth;
     const maxY = valentineScreen.offsetHeight - noBtn.offsetHeight;
     noBtn.style.left = Math.random()*maxX + "px";
     noBtn.style.top = Math.random()*maxY + "px";
     noBtnMoves++;
-    if (noBtnMoves >= 3) noBtn.onclick = showFinalNoMessage;
+    if(noBtnMoves>=3) noBtn.onclick=showFinalNoMessage;
 };
 
 function showFinalNoMessage() {
@@ -281,7 +290,7 @@ function resetGame() {
     musicPlayer.pause();
     musicPlayer.currentTime = 0;
     level=1; score=0; noBtnMoves=0;
-    controls.style.display="none";
+    document.getElementById("controls").style.display="none";
     document.getElementById("valentineScreen").style.display="none";
     document.getElementById("startScreen").style.display="flex";
 }
@@ -289,4 +298,3 @@ function resetGame() {
 
 </body>
 </html>
-
