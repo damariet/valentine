@@ -7,77 +7,82 @@
 <style>
 :root { --vh: 1vh; }
 html, body {
-  margin:0; padding:0;
-  width:100%; height:100%;
-  overflow:hidden; touch-action:none;
-  background:black;
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden; touch-action: none;
+  background: black;
 }
-body { height:calc(var(--vh,1vh)*100); }
+body { height: calc(var(--vh,1vh) * 100); }
 
 /* START & TUTORIAL */
 #startScreen, #tutorialOverlay {
-  position:absolute; width:100%; height:calc(var(--vh,1vh)*100);
-  display:flex; justify-content:center; align-items:center; flex-direction:column;
+  position: absolute; width: 100%; height: calc(var(--vh,1vh) * 100);
+  display: flex; justify-content: center; align-items: center; flex-direction: column;
 }
 #startScreen {
-  background:linear-gradient(45deg,#ffccff,#ccffff,#ffffcc,#ffccff);
-  background-size:400% 400%; animation:rainbowShift 8s ease infinite;
-  z-index:15;
+  background: linear-gradient(45deg, #ffccff, #ccffff, #ffffcc, #ffccff);
+  background-size: 400% 400%; animation: rainbowShift 8s ease infinite;
+  z-index: 15;
 }
 @keyframes rainbowShift {
-  0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 #startScreen h1 {
   font-size: 5.5vw;
-  text-align:center;
+  text-align: center;
   margin: 0 10px;
 }
 #tutorialOverlay {
-  background:rgba(0,0,0,0.75);
-  color:cyan; font-size:4.5vw; text-align:center;
-  padding:15px; z-index:16; display:none;
+  background: rgba(0,0,0,0.75);
+  color: cyan; font-size: 4.5vw; text-align: center;
+  padding: 15px; z-index: 16; display: none;
 }
 
 /* UI */
 button {
-  padding:10px 22px; font-size:4.5vw;
-  border:3px solid hotpink; background:black; color:hotpink;
-  cursor:pointer; margin-top:15px;
+  padding: 10px 22px; font-size: 4.5vw;
+  border: 3px solid hotpink; background: black; color: hotpink;
+  cursor: pointer; margin-top: 15px;
 }
 #controls {
-  position:fixed; top:8px; right:8px; z-index:20; display:none;
-  font-size:4vw;
+  position: fixed; top: 8px; right: 8px; z-index: 20; display: none;
+  font-size: 4vw;
 }
 #gameArea {
-  width:100vw; height:calc(var(--vh,1vh)*100);
-  background:linear-gradient(to top,#120458,#000);
-  position:relative; overflow:hidden;
+  width: 100vw; height: calc(var(--vh,1vh) * 100);
+  background: linear-gradient(to top, #120458, #000);
+  position: relative; overflow: hidden;
 }
 #score {
-  position:absolute; top:14px; width:100%;
-  color:cyan; font-size:4.5vw; z-index:5; display:none;
+  position: absolute; top: 14px; width: 100%;
+  color: cyan; font-size: 4.5vw; z-index: 5; display: none;
 }
+
+/* Hearts both same size */
 .heart, .broken {
-  position:absolute;
-  font-size:7vw; /* make both heart types exactly the same size */
+  position: absolute;
+  font-size: 7vw; /* consistent sizing */
 }
-.heart { color:#ff00ff; }
-.broken { color:cyan; }
+.heart { color: #ff00ff; }
+.broken { color: cyan; }
+
 #basket {
-  position:absolute; bottom:15px; font-size:7vw;
-  color:cyan; display:none;
+  position: absolute; bottom: 15px; font-size: 7vw;
+  color: cyan; display: none;
 }
 #valentineScreen {
-  position:absolute; inset:0;
-  background:black; color:hotpink;
-  display:none; justify-content:center; align-items:center; flex-direction:column;
-  font-size:5vw; z-index:20;
+  position: absolute; inset: 0;
+  background: black; color: hotpink;
+  display: none; justify-content: center; align-items: center; flex-direction: column;
+  font-size: 5vw; z-index: 20;
 }
 </style>
 </head>
 <body>
 
-<!-- Audio -->
+<!-- AUDIO -->
 <audio id="musicPlayer" loop>
   <source src="https://raw.githubusercontent.com/damariet/valentine/main/Chris_Brown_-_New_Flame_Feat._Usher_And_Rick_Ross_(mp3.pm).mp3" type="audio/mpeg">
 </audio>
@@ -85,7 +90,7 @@ button {
   <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_6e6f8e3d44.mp3">
 </audio>
 
-<!-- Screens -->
+<!-- SCREENS -->
 <div id="startScreen">
   <h1>💘 Winning Autumn's Heart 💘</h1>
   <button onclick="showTutorial()">PRESS START</button>
@@ -115,34 +120,36 @@ button {
 </div>
 
 <script>
-// dynamic viewport
-function setDvh(){document.documentElement.style.setProperty('--vh', `${window.innerHeight*0.01}px`);}
+// dynamic viewport fix
+function setDvh() {
+  document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+}
 window.addEventListener('resize', setDvh);
 setDvh();
 
 // GAME VARS
-let score=0, level=1;
-const basket=document.getElementById("basket");
-const scoreDisplay=document.getElementById("score");
-const musicPlayer=document.getElementById("musicPlayer");
-const catchSound=document.getElementById("catchSound");
+let score = 0, level = 1;
+const basket = document.getElementById("basket");
+const scoreDisplay = document.getElementById("score");
+const musicPlayer = document.getElementById("musicPlayer");
+const catchSound = document.getElementById("catchSound");
 
-let basketX=window.innerWidth/2, targetX=basketX;
-let moveStartX=null, touchActive=false, gameLoop, inactivityTimer, isPaused=false;
+let basketX = window.innerWidth/2, targetX = basketX;
+let moveStartX = null, touchActive = false, gameLoop, inactivityTimer, isPaused = false;
 
-// Hide until start
-basket.style.left=basketX+"px";
-basket.style.display="none";
+// hide basket until start
+basket.style.left = basketX+"px";
+basket.style.display = "none";
 
-// Smooth follow
+// smooth follow
 function smoothFollow(){
   basketX += (targetX - basketX)*0.25;
-  basket.style.left=basketX+"px";
+  basket.style.left = basketX+"px";
   requestAnimationFrame(smoothFollow);
 }
 smoothFollow();
 
-// Input handling
+// input
 function handleDrag(x){
   if(!touchActive) return;
   let delta = x - moveStartX;
@@ -159,19 +166,20 @@ document.addEventListener("mousedown", e=>{touchActive=true; moveStartX=e.client
 document.addEventListener("mousemove", e=>{handleDrag(e.clientX);});
 document.addEventListener("mouseup", ()=>touchActive=false);
 
-// Auto pause music
+// auto pause music
 document.addEventListener("visibilitychange", ()=>{
   if(document.hidden && !musicPlayer.paused) musicPlayer.pause();
 });
 
-// Pause/Resume
-const pauseBtn=document.getElementById("pauseBtn");
-const resumeBtn=document.getElementById("resumeBtn");
+// pause/resume
+const pauseBtn = document.getElementById("pauseBtn");
+const resumeBtn = document.getElementById("resumeBtn");
 pauseBtn.addEventListener("click", ()=>{
   if(!isPaused){
     togglePause();
     musicPlayer.pause();
-    pauseBtn.style.display="none"; resumeBtn.style.display="inline";
+    pauseBtn.style.display="none";
+    resumeBtn.style.display="inline";
   }
 });
 resumeBtn.addEventListener("click", ()=>{
@@ -184,44 +192,44 @@ resumeBtn.addEventListener("click", ()=>{
 function togglePause(){
   isPaused = !isPaused;
   if(isPaused) clearInterval(gameLoop);
-  else gameLoop=setInterval(createHeart, 600-level*100);
+  else gameLoop = setInterval(createHeart, 600-level*100);
 }
 
-// Show tutorial
+// SHOW TUTORIAL
 function showTutorial(){
   document.getElementById("startScreen").style.display="none";
   document.getElementById("tutorialOverlay").style.display="flex";
 }
 
-// Demo and game start
+// Demo and start
 function runDemo(){
   document.getElementById("tutorialOverlay").style.display="none";
-  let count=0;
-  let demoInt=setInterval(()=>{
+  let count = 0;
+  let demoInt = setInterval(()=>{
     dropDemoHeart();
     count++;
-    if(count>=2){
+    if(count >= 2){
       clearInterval(demoInt);
       setTimeout(startGame, 500);
     }
   }, 1000);
 }
 function dropDemoHeart(){
-  let heart=document.createElement("div");
+  let heart = document.createElement("div");
   heart.innerHTML="♥"; heart.className="heart";
-  heart.style.left=Math.random()*(window.innerWidth-40)+"px";
-  heart.style.top="-30px";
+  heart.style.left = Math.random()*(window.innerWidth-40)+"px";
+  heart.style.top = "-30px";
   document.getElementById("gameArea").appendChild(heart);
   let speed=4;
   let fall=setInterval(()=>{
-    heart.style.top=heart.offsetTop+speed+"px";
-    if(heart.offsetTop>window.innerHeight){
+    heart.style.top = heart.offsetTop + speed + "px";
+    if(heart.offsetTop > window.innerHeight){
       heart.remove(); clearInterval(fall);
     }
   },30);
 }
 
-// Start game
+// START GAME
 function startGame(){
   musicPlayer.volume=0;
   musicPlayer.play().catch(()=>{});
@@ -231,19 +239,19 @@ function startGame(){
   basket.style.display="block";
   updateScore();
   gameLoop=setInterval(createHeart, 600-level*100);
-  resetInactivity();
+  resetInactivity(); // now only during play
 }
 
-// Inactivity reset
+// INACTIVITY RESET
 function resetInactivity(){
   clearTimeout(inactivityTimer);
-  inactivityTimer=setTimeout(()=>{
-    alert("No movement for 20 seconds — restarting!");
+  inactivityTimer = setTimeout(()=>{
+    alert("No movement for 20s — restarting!");
     resetGame();
   }, 20000);
 }
 
-// Hearts & collisions
+// HEARTS & COLLISION
 function updateScore(){
   const targets=[5,10,15];
   scoreDisplay.innerText=`LEVEL ${level} — LOVE: ${score} / ${targets[level-1]}`;
@@ -255,29 +263,28 @@ function nextLevel(){
 }
 function createHeart(){
   if(isPaused) return;
-  let heart=document.createElement("div");
-  let isBroken=Math.random()<(0.2+level*0.15);
+  let heart = document.createElement("div");
+  let isBroken = Math.random()<(0.2+level*0.15);
   heart.innerHTML = isBroken?"💔":"♥";
   heart.className = isBroken?"broken":"heart";
-  heart.style.left=Math.random()*(window.innerWidth-40)+"px";
-  heart.style.top="-30px";
+  heart.style.left = Math.random()*(window.innerWidth-40)+"px";
+  heart.style.top = "-30px";
   document.getElementById("gameArea").appendChild(heart);
 
-  let speed=3+level*2;
+  let speed = 3 + level*2;
   let fall=setInterval(()=>{
     if(isPaused) return;
-    heart.style.top=heart.offsetTop+speed+"px";
+    heart.style.top = heart.offsetTop + speed + "px";
 
     let hr=heart.getBoundingClientRect();
     let br=basket.getBoundingClientRect();
     let basketHitWidth = br.width * 0.6;
     let basketHitX = br.left + (br.width - basketHitWidth)/2;
 
-    if(hr.left < basketHitX+basketHitWidth &&
+    if(hr.left < basketHitX + basketHitWidth &&
        hr.left+hr.width > basketHitX &&
        hr.top < br.top+br.height &&
        hr.top+hr.height > br.top){
-
       if(!isBroken){
         catchSound.currentTime=0; catchSound.play(); score++;
       }
@@ -289,14 +296,14 @@ function createHeart(){
   },30);
 }
 
-// Music fade
+// MUSIC FADE
 function smoothFadeInMusic(d){ let step=1/(d*20); let fade=setInterval(()=>{
     if(musicPlayer.volume<1) musicPlayer.volume=Math.min(musicPlayer.volume+step,1);
     else clearInterval(fade);
   },50);
 }
 
-// Valentine page behavior
+// VALENTINE SCREEN
 function showValentine(){document.getElementById("valentineScreen").style.display="flex";}
 document.getElementById("yesBtn").onclick=()=>{
   document.getElementById("valentineScreen").innerHTML=`
@@ -305,10 +312,8 @@ document.getElementById("yesBtn").onclick=()=>{
     <button onclick="resetGame()">RESTART</button>`;
 };
 
-let noBtnMoves=0;
+let noBtnMoves=0, noReturnTimeout=null;
 const noBtn=document.getElementById("noBtn");
-let noTimeout=null;
-
 noBtn.onmouseover=()=>{
   if(noBtnMoves>=3) return;
   noBtn.style.position="absolute";
@@ -317,25 +322,22 @@ noBtn.onmouseover=()=>{
   noBtn.style.left=Math.random()*mx+"px";
   noBtn.style.top=Math.random()*my+"px";
   noBtnMoves++;
-  if(noBtnMoves>=3){
-    noBtn.onclick=showFinalNoMessage;
-  }
+  if(noBtnMoves>=3) noBtn.onclick=showFinalNoMessage;
 };
 
-// after 15s on final no page, return to yes/no
 function showFinalNoMessage(){
   document.getElementById("valentineScreen").innerHTML=`
     <h1>Oh you thought you could say NO? 😏</h1>
     <h2>Happy Valentine’s Day! 💘</h2>
     <button onclick="resetGame()">RESTART</button>`;
-  if(noTimeout) clearTimeout(noTimeout);
-  noTimeout = setTimeout(() => {
-    document.getElementById("valentineScreen").innerHTML = `
+  if(noReturnTimeout) clearTimeout(noReturnTimeout);
+  noReturnTimeout = setTimeout(()=>{
+    document.getElementById("valentineScreen").innerHTML=`
       <h1>Autumn… 💘</h1>
       <h2>Will you be my Valentine?</h2>
       <button id="yesBtn">YES</button>
       <button id="noBtn">NO</button>`;
-  }, 15000);
+  }, 5000); // 5 seconds
 }
 
 function resetGame(){
@@ -346,12 +348,13 @@ function resetGame(){
   basket.style.display="none";
   document.getElementById("startScreen").style.display="flex";
   clearInterval(gameLoop); clearTimeout(inactivityTimer);
-  if(noTimeout) { clearTimeout(noTimeout); noTimeout=null; }
+  if(noReturnTimeout) clearTimeout(noReturnTimeout);
 }
 </script>
 
 </body>
 </html>
+
 
 
 
